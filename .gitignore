@@ -1,0 +1,15 @@
+# log files
+log/*
+
+# dataset files
+dataset/*
+
+# saved models
+model/*
+
+# test png files
+*.png
+
+# cache files
+__pycache__
+src/__pycache__
