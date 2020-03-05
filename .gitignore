@@ -1,11 +1,11 @@
 # log files
-log/*
+log
 
 # dataset files
-dataset/*
+dataset
 
 # saved models
-model/*
+model
 
 # test png files
 *.png
