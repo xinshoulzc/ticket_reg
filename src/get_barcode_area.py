@@ -17,13 +17,10 @@ def get_barcode_area(filename):
     rgb_roi = roi.copy()
     roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
     fixed_t = cv2.threshold(roi, 160, 255, cv2.THRESH_BINARY_INV)[1]  # 阈值可以低一些
-    cv2.imwrite("ed.png", fixed_t)
-    cv2.imshow("thr", fixed_t)
 
     element_link = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 1))
     dilation_ed = cv2.dilate(fixed_t, element_link, iterations=1)  # 膨胀一次
     erosion_ed = cv2.erode(dilation_ed, element_link, iterations=1)  # 腐蚀一次
-    cv2.imshow("linked", erosion_ed)
 
     biggest_rect = get_biggest_contour(erosion_ed)
     brx1, bry1, brw, brh = biggest_rect  # 获得条形码的下边缘 （br = biggest rectangle）
