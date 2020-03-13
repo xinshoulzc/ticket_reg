@@ -3,6 +3,7 @@ import numpy as np
 import cv2 as cv
 import copy as cp
 import sys, getopt
+# import shutil
 
 DEBUG = 0
 
@@ -245,6 +246,8 @@ def get_roi_img(img, mark_color):
             y_low = np.min(ys)
             y_high = np.max(ys)
 
+            if y_low +2 >= y_high or x_low+2 >= x_high:
+                return None
             dstImg = img[y_low + 2:y_high, x_low + 2:x_high]
             return dstImg
 
@@ -255,14 +258,18 @@ def roi_to_digit_img(img, mode):
     X_SIZE = 2*img.shape[1]
     img = cv.resize(img, (X_SIZE, Y_SIZE))
 
+
     min_black_count = 0
+    break_threshold = 0
     if mode == MODE_PRICE:
         min_black_count = 0.35 * X_SIZE * Y_SIZE
+        break_threshold = 1
     elif mode == MODE_BARCODE:
         min_black_count = 0.2 * X_SIZE * Y_SIZE
+        break_threshold = 3
+
     min_line_length = 35
     min_area = (Y_SIZE / 6) ** 2
-    break_threshold = 1
     fixed_char_width = 30  # ~35
     min_char_width = 4 * fixed_char_width / 5
     min_char_gap = fixed_char_width / 3
@@ -294,13 +301,19 @@ def process(src_dir, dst_dir, mode):
     if not os.path.exists(dst_dir):
         os.mkdir(dst_dir)
     # else:
-    #     shutil.rmtree(dst_path)
-    #     os.mkdir(dst_path)
+    #     shutil.rmtree(dst_dir)
+    #     os.mkdir(dst_dir)
     for entry in entries:
         file = os.path.join(src_dir, entry)
         if os.path.isfile(file):
             img = cv.imread(file)
+            if img is None:
+                print("Open image 「" + file + "」failed.")
+                continue
             roi = get_roi_img(img, mark_color)
+            if roi is None:
+                print("Image 「"+ file + "」 has no roi area.")
+                continue
             digit_imgs = roi_to_digit_img(roi, mode)
             for i, digit in enumerate(digit_imgs):
                 cv.imwrite(os.path.join(dst_dir, add_suffix(entry, str(i))), digit)
@@ -329,4 +342,4 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-    # process('../datasets/muti_digit','../datasets/single_digit', 1)
+    # process('../datasets/muti_digit','../datasets/single_digit', 2)
