@@ -1,6 +1,8 @@
 import tensorflow as tf
 import cv2 as cv
 import utils
+import argparse
+import sys
 
 X_SIZE, Y_SIZE = 28, 28
 TRAIN_RATE = 0.9
@@ -38,8 +40,8 @@ def infer():
     # print(predict.shape)
     return predict
 
-def train_main():
-    paths, x_train, y_train = utils.load_data_once()
+def train_main(inputdir, modeldir):
+    paths, x_train, y_train = utils.load_data_once(inputdir)
     train_size = int(len(paths) * TRAIN_RATE)
     paths, x_train, y_train = paths[:train_size], x_train[:train_size], y_train[:train_size]
 
@@ -73,15 +75,18 @@ def train_main():
                 if batch_id % 4000 == 0:
                     print("epoch: %d, batch id: %d, loss: %f" %(epoch, batch_id, train_loss))
 
-        saver.save(sess, "model/mnist.cpkt")
+        saver.save(sess, os.path.join(modeldir, "mnist.cpkt"))
 
         print("train finished...")
 
-def infer_main():
+def infer_main(inputdir, modeldir, outputdir):
     # load data
-    paths, x_test, y_test = utils.load_data_once()
-    train_size = int(len(paths) * TRAIN_RATE)
-    paths, x_test, y_test = paths[train_size:], x_test[train_size:], y_test[train_size:]
+    if len(outputdir) <= 0:
+        paths, x_test, y_test = utils.load_data_once(inputdir)
+        train_size = int(len(paths) * TRAIN_RATE)
+        paths, x_test, y_test = paths[train_size:], x_test[train_size:], y_test[train_size:]
+    else:
+        paths, x_test, y_test = utils.load_data_once(outputdir)
     print(x_test.shape, y_test.shape)
 
     # inference process
@@ -89,7 +94,7 @@ def infer_main():
     saver = tf.train.Saver(max_to_keep=2)
     # saver = tf.train.import_meta_graph('model/mnist.cpkt-4.meta')
     with tf.Session() as sess:
-        saver.restore(sess, 'model/mnist.cpkt')
+        saver.restore(sess, os.path.join(modeldir, "mnist.cpkt"))
         y_predict = sess.run(predict, feed_dict={
             images: x_test,
             # labels: y_test,
@@ -116,5 +121,20 @@ def infer_main():
 
 
 if __name__ == "__main__":
-    # train_main()
-    infer_main()
+    try:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-i", "--inputdir", required=True)
+        parser.add_argument("-o", "--outputdir", required=True)
+        parser.add_argument("-o", "--modeldir", required=True)
+        parser.add_argument("-m", "--mode", required=True)
+        args = parser.parse_args()
+        print("intputdir: ", args.inputdir, "outputdir: ", args.outputdir, "modeldir: ", args.modeldir, "mode: ", args.mode)
+        if args.mode == "train":
+            train_main(args.inputdir, args.modeldir)
+        elif args.mode == "eval":
+            infer_main(args.inputdir, args.modeldir, args.outputdir)
+        else:
+            print("UNKNOWN MODE")
+            sys.exit(-1)
+    except:
+        sys.exit(-1)

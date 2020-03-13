@@ -9,8 +9,8 @@ DATASET_DIR = "datasets"
 X_SIZE, Y_SIZE = 28, 28
 DATA_PATH, DATA_X, DATA_Y = None, None, None
 
-def load_data(dir="train", exclude_labels = []):
-    dataset_path = os.path.join(DATASET_DIR, dir)
+def load_data(dir="datasets/train", exclude_labels = []):
+    dataset_path = dir
 
     imgs_paths = []
     cnt = 0
@@ -24,6 +24,7 @@ def load_data(dir="train", exclude_labels = []):
             if labelstr[ind] > '9' or labelstr[ind] < '0': continue
             imgs_paths.append(os.path.join(subdir, fn))
 
+    random.seed(2333)
     random.shuffle(imgs_paths)
 
     imgs, labels = np.zeros((len(imgs_paths), X_SIZE, Y_SIZE), dtype=np.int16), np.zeros(len(imgs_paths), dtype=np.int8)
