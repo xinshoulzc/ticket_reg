@@ -4,8 +4,8 @@
 EVAL_DIR='datasets/train'
 ID=1
 
-RAW='XXX'
-MUTI_DIGIT='YYY'
+RAW='raw'
+MULTI_DIGIT='multi_digit'
 SINGLE_DIGIT='ZZZ'
 RESULT='result'
 
@@ -32,13 +32,26 @@ fi
 
 if [[ $2 != "" && $3 != "" ]]
 then
-  RAW_DIR=$2
+  RAW=$2
   OUTPUT_DIR=$3
-  # step1 TODO:
+  # step1 :
+  if [[ $1 == "1" ]]
+  then
+  python3 src/get_CNY_area.py \
+    --indir $DATASET_DIR/$RAW \
+    --outdir $DATASET_DIR/$MULTI_DIGIT \
+    > log/infer_step1.log
+  elif [[ $1 == "2" ]]
+    python3 src/get_barcode_area.py \
+    --indir $DATASET_DIR/$RAW \
+    --outdir $DATASET_DIR/$MULTI_DIGIT \
+    > log/infer_step1.log
+  fi
+  CheckCode $? 1
 
   # step2
   python3 src/digit_segment.py \
-    --indir $DATASET_DIR/$MUTI_DIGIT \
+    --indir $DATASET_DIR/$MULTI_DIGIT \
     --outdir $DATASET_DIR/$SINGLE_DIGIT \
     > log/infer_step2.log
   CheckCode $? 2

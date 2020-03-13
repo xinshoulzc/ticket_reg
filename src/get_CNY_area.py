@@ -1,11 +1,13 @@
-# import os
 # import time
-
+import os
+import sys
+import getopt
 import cv2
-from roi_locator import *
+import numpy as np
+from src.roi_locator import *
 
 
-def get_TOTAL_area(filename):
+def get_CNY_area(filename):
     src = cv2.imread(filename)
     if src is None:
         return None
@@ -246,21 +248,49 @@ def clean_hor(img):  # 消除细竖线
     return img
 
 
-# if __name__ == '__main__':
-#     start_time = time.clock()
-#     filePath = '/Users/yaoyao/PycharmProjects/tf_demo/all'
-#     p_list = os.listdir(filePath)
-#     count = 0
-#     for p in p_list:
-#         print("curr:", p)
-#         try:
-#             result = get_TOTAL_area('all/' + p)
-#             if result is not None:
-#                 cv2.imwrite('result/total_area_' + p, result)
-#                 print(count)
-#         except Exception:
-#             print("error on:", p)
-#         finally:
-#             count += 1
-#     end_time = time.clock()
-#     print("------------------------------done:", end_time - start_time, "s")
+
+def process(src_dir, dst_dir):
+    count = 0
+    p_list = os.listdir(src_dir)
+    if not os.path.exists(dst_dir):
+        os.mkdir(dst_dir)
+    for p in p_list:
+        print("getting CNY area:", p)
+        try:
+            file = os.path.join(src_dir, p)
+            result_img = get_CNY_area(file)
+            if result_img is not None:
+                out_file = os.path.join(dst_dir, p)
+                cv2.imwrite(out_file, result_img)
+                print(count)
+            else:
+                print("get CNY failed at:", p)
+        except Exception:
+            print("Exception on: get_CNY_area.py --", p)
+            sys.exit(3)
+        finally:
+            count += 1
+    print("Finished: " + str(count) + " CNY areas")
+
+
+def main(argv):
+    inputdir = ''
+    outputdir = ''
+    try:
+        opts, args = getopt.getopt(argv, "h", ["indir=", "outdir="])
+    except getopt.GetoptError:
+        print('get_CNY_area.py --indir <inputdir> --outdir <outputdir>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == "--indir":
+            inputdir = arg
+        elif opt == "--outdir":
+            outputdir = arg
+    if os.path.isdir(inputdir) and os.path.isdir(outputdir):
+        process(inputdir, outputdir)
+    else:
+        print("invalid folder")
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

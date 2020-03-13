@@ -1,8 +1,10 @@
 # from datetime import datetime
-# import os
+import os
+import sys
+import getopt
 
 import cv2
-from barcode_roi_locator import *
+from src.barcode_roi_locator import *
 
 
 def get_barcode_area(filename):
@@ -77,21 +79,48 @@ def cutROI(img, x1, y1, x2, y2):  # 左上角 和 右下角的坐标
 #         cv2.destroyAllWindows()
 
 
-# if __name__ == '__main__':
-#     start_time = datetime.now()
-#     filePath = '/Users/bytedance/PycharmProjects/cvTicketRecog/all'
-#     p_list = os.listdir(filePath)
-#     count = 0
-#     for p in p_list:
-#         print("curr:", p)
-#         try:
-#             result = get_barcode_area('all/' + p)
-#             if result is not None:
-#                 cv2.imwrite('result/barcode_' + p, result)
-#                 print(count)
-#         except Exception:
-#             print("error on:", p)
-#         finally:
-#             count += 1
-#     end_time = datetime.now()
-#     print("------------------------------done:", end_time - start_time, "s")
+def process(src_dir, dst_dir):
+    count = 0
+    p_list = os.listdir(src_dir)
+    if not os.path.exists(dst_dir):
+        os.mkdir(dst_dir)
+    for p in p_list:
+        print("getting barcode area:", p)
+        try:
+            file = os.path.join(src_dir, p)
+            result_img = get_barcode_area(file)
+            if result_img is not None:
+                out_file = os.path.join(dst_dir, p)
+                cv2.imwrite(out_file, result_img)
+                print(count)
+            else:
+                print("get barcode failed at:", p)
+        except Exception:
+            print("Exception on: get_barcode_area.py-", p)
+            sys.exit(3)
+        finally:
+            count += 1
+    print("Finished: " + str(count) + " barcode areas")
+
+
+def main(argv):
+    inputdir = ''
+    outputdir = ''
+    try:
+        opts, args = getopt.getopt(argv, "h", ["indir=", "outdir="])
+    except getopt.GetoptError:
+        print('get_barcode_area.py --indir <inputdir> --outdir <outputdir>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == "--indir":
+            inputdir = arg
+        elif opt == "--outdir":
+            outputdir = arg
+    if os.path.isdir(inputdir) and os.path.isdir(outputdir):
+        process(inputdir, outputdir)
+    else:
+        print("invalid folder")
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
