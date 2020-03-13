@@ -16,3 +16,6 @@ src/__pycache__
 
 # local mac file
 .DS_Store
+
+# IDEA dir
+.idea

@@ -6,7 +6,7 @@ ID=1
 
 RAW='raw'
 MULTI_DIGIT='multi_digit'
-SINGLE_DIGIT='ZZZ'
+SINGLE_DIGIT='single_digit'
 RESULT='result'
 
 # model dir

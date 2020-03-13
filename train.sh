@@ -3,9 +3,9 @@
 # dataset dir
 DATASET_DIR='datasets'
 # TODO:
-RAW='XXX'
-MUTI_DIGIT='YYY'
-SINGLE_DIGIT='ZZZ'
+RAW='raw'
+MUTI_DIGIT='multi_digit'
+SINGLE_DIGIT='single_digit'
 
 # model dir
 MODEL_DIR='model'
@@ -23,9 +23,11 @@ CheckCode() {
 # Create Train Dataset
 
 # Step1: 获取候选框
-
-# TODO:
-# args inputdir outputdir
+python3 src/get_CNY_area.py \
+  --indir $DATASET_DIR/$RAW \
+  --outdir $DATASET_DIR/$MULTI_DIGIT \
+  > log/train_step1.log
+CheckCode $? 1
 
 # Step2: 分割单字
 python3 src/digit_segment.py \
