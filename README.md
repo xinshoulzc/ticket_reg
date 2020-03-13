@@ -20,10 +20,12 @@ sh train.sh
 
 ## Eval
 ```
-sh eval.sh
+sh eval.sh 1 # price recognition
+sh eval.sh 2 # barcode recognition
 ```
 
 ## infer
 ```
-sh eval.sh YOUR_IMAGE_DIR OUTPUT_DIR
+sh eval.sh 1 YOUR_IMAGE_DIR OUTPUT_DIR # price recognition
+sh eval.sh 2 YOUR_IMAGE_DIR OUTPUT_DIR # barcode recognition
 ```

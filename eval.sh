@@ -2,6 +2,7 @@
 
 # eval dir
 EVAL_DIR='dataset/train'
+ID=1
 
 RAW='XXX'
 MUTI_DIGIT='YYY'
@@ -21,10 +22,18 @@ CheckCode() {
   fi
 }
 
-if [[ $1 != "" && $2 != "" ]]
+if [[ $1 != "" ]]
 then
-  RAW_DIR=$1
-  OUTPUT_DIR=$2
+  ID=$1
+else
+  echo "error: no ID provided"
+  exit 1
+fi
+
+if [[ $2 != "" && $3 != "" ]]
+then
+  RAW_DIR=$2
+  OUTPUT_DIR=$3
   # step1 TODO:
 
   # step2
