@@ -6,15 +6,15 @@ import sys, getopt
 
 DEBUG = 0
 
-MARK_COLOR = np.array([0, 128, 0])
-# resize
-X_SIZE = 420
-Y_SIZE = 40
+MODE_PRICE = 1
+MODE_BARCODE = 2
+
+MARK_COLOR_PRICE = np.array([0, 128, 0])
+MARK_COLOR_BCODE = np.array([0, 128, 255])
 
 # remove line process direction
 DIR_TOP_DOWN = 0
 DIR_BOTTOM_UP = 1
-
 
 def add_suffix(filename, suffix):
     names = filename.split(".")
@@ -62,10 +62,11 @@ def binary(img, min_black_count):
 # 去除横线
 def try_rmv_line(img, row_idx, col_begin, col_end, direction):
     i = row_idx
+    h, w = img.shape[:2]
 
     if i == 0 or i == 1:
         img[i, col_begin:col_end] = 255
-    elif i == Y_SIZE - 1 or i == Y_SIZE - 2:
+    elif i == h - 1 or i == h - 2:
         img[i, col_begin:col_end] = 255
     else:
         for j in range(col_begin, col_end):
@@ -82,16 +83,17 @@ def try_rmv_line(img, row_idx, col_begin, col_end, direction):
 
 
 def check_line(img, row, direction, min_line_length):
+    h, w = img.shape[:2]
     connect_count = 0
     line_begin = -1
-    for j in range(X_SIZE):
+    for j in range(w):
         if img[row, j] == 0:
             if line_begin == -1:
                 line_begin = j
             connect_count += 1
 
-            if j == X_SIZE - 1 and connect_count >= min_line_length:
-                try_rmv_line(img, row, line_begin, X_SIZE, direction)
+            if j == w - 1 and connect_count >= min_line_length:
+                try_rmv_line(img, row, line_begin, w, direction)
         else:
             if connect_count >= min_line_length:
                 try_rmv_line(img, row, line_begin, j, direction)
@@ -100,12 +102,13 @@ def check_line(img, row, direction, min_line_length):
 
 
 def rmv_line(img, min_line_length):
+    h, w = img.shape[:2]
     tmp = cp.copy(img)
     # top-down
-    for i in range(Y_SIZE):
+    for i in range(h):
         check_line(img, i, DIR_TOP_DOWN, min_line_length)
     # bottom-up
-    for i in range(Y_SIZE - 1, -1, -1):
+    for i in range(h - 1, -1, -1):
         check_line(tmp, i, DIR_BOTTOM_UP, min_line_length)
     img = cv.bitwise_and(img, tmp)
     return img
@@ -155,16 +158,17 @@ class DigitZone:
 # separate digits
 # if black pixels in one column <= BREAK_THRESHOLD: do break
 def find_digit_zone(img, break_threshold):
+    h, w = img.shape[:2]
     digit_zones = []
     begin = -1
-    for j in range(X_SIZE):
+    for j in range(w):
         # cut last digit
-        if j == X_SIZE - 1 and begin != -1:
-            digit_zones.append(DigitZone(begin, X_SIZE))
+        if j == w - 1 and begin != -1:
+            digit_zones.append(DigitZone(begin, w))
             break
 
         px_num = 0
-        for i in range(Y_SIZE):
+        for i in range(h):
             if img[i][j] == 0:
                 px_num += 1
 
@@ -181,6 +185,7 @@ def find_digit_zone(img, break_threshold):
 
 def separate_digit(img, break_threshold, fix_char_width, min_char_width, max_char_width, min_char_gap,
                    min_char_height):
+    h, w = img.shape[:2]
     digit_zones = find_digit_zone(img, break_threshold)
     i = 0
     # merge
@@ -216,7 +221,7 @@ def separate_digit(img, break_threshold, fix_char_width, min_char_width, max_cha
         digit_img = img[:, zone.left:zone.right]
 
         trim_height = 0
-        for i in range(Y_SIZE):
+        for i in range(h):
             if (digit_img[i] == 0).sum() != 0:
                 trim_height += 1
 
@@ -244,31 +249,47 @@ def get_roi_img(img, mark_color):
             return dstImg
 
 
-def roi_to_digit_img(img):
+def roi_to_digit_img(img, mode):
+    # resize
+    Y_SIZE = 2*img.shape[0]
+    X_SIZE = 2*img.shape[1]
     img = cv.resize(img, (X_SIZE, Y_SIZE))
 
-    # to binary: use hsv space
-    min_black_count = 0.35 * X_SIZE * Y_SIZE
-    img = binary(img, min_black_count)
-    # remove line: simply count horizontal pixels
+    min_black_count = 0
+    if mode == MODE_PRICE:
+        min_black_count = 0.35 * X_SIZE * Y_SIZE
+    elif mode == MODE_BARCODE:
+        min_black_count = 0.2 * X_SIZE * Y_SIZE
     min_line_length = 35
-    img = rmv_line(img, min_line_length)
-    # filter bigger noise
     min_area = (Y_SIZE / 6) ** 2
-    filter_noise_by_area(img, min_area, 8)
-    # save all chars' image
     break_threshold = 1
     fixed_char_width = 30  # ~35
     min_char_width = 4 * fixed_char_width / 5
     min_char_gap = fixed_char_width / 3
     max_char_width = 8 * fixed_char_width / 5
     min_char_height = Y_SIZE / 2
+
+    if mode == MODE_PRICE:
+        img = binary(img, min_black_count)
+        # remove line: simply count horizontal pixels
+        img = rmv_line(img, min_line_length)
+        # filter bigger noise
+        filter_noise_by_area(img, min_area, 8)
+
+    elif mode == MODE_BARCODE:
+        img = binary(img, min_black_count)
+
+    # save all chars' image
     digit_imgs = separate_digit(img, break_threshold, fixed_char_width, min_char_width, min_char_gap, max_char_width,
                                 min_char_height)
     return digit_imgs
 
+# mode : 1:price; 2:barcode
+def process(src_dir, dst_dir, mode):
+    mark_color = MARK_COLOR_PRICE
+    if mode == MODE_BARCODE:
+        mark_color = MARK_COLOR_BCODE
 
-def process(src_dir, dst_dir):
     entries = os.listdir(src_dir)
     if not os.path.exists(dst_dir):
         os.mkdir(dst_dir)
@@ -279,29 +300,33 @@ def process(src_dir, dst_dir):
         file = os.path.join(src_dir, entry)
         if os.path.isfile(file):
             img = cv.imread(file)
-            roi = get_roi_img(img, MARK_COLOR)
-            digit_imgs = roi_to_digit_img(roi)
+            roi = get_roi_img(img, mark_color)
+            digit_imgs = roi_to_digit_img(roi, mode)
             for i, digit in enumerate(digit_imgs):
                 cv.imwrite(os.path.join(dst_dir, add_suffix(entry, str(i))), digit)
 
 def main(argv):
     inputdir = ''
     outputdir = ''
+    mode = 1
     try:
-        opts, args = getopt.getopt(argv, "h", ["indir=", "outdir="])
+        opts, args = getopt.getopt(argv, "h", ["indir=", "outdir=", "mode="])
+        for opt, arg in opts:
+            if opt == "--indir":
+                inputdir = arg
+            elif opt == "--outdir":
+                outputdir = arg
+            elif opt == "--mode":
+                mode = arg
+        process(inputdir, outputdir, mode)
     except getopt.GetoptError:
-        print('digit_segment.py --indir <inputdir> --outdir <outputdir>')
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == "--indir":
-            inputdir = arg
-        elif opt == "--outdir":
-            outputdir = arg
-    if os.path.isdir(inputdir) and os.path.isdir(outputdir):
-        process(inputdir, outputdir)
-    else:
-        print("invalid folder")
+        print('Usage: digit_segment.py --indir <inputdir> --outdir <outputdir> --mode <mode>')
+        sys.exit(-1)
+    except Exception as e:
+        print('Error: ', e)
+        sys.exit(-2)
 
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+    # process('../datasets/muti_digit','../datasets/single_digit', 1)

@@ -4,8 +4,8 @@
 DATASET_DIR='datasets'
 # TODO:
 RAW='XXX'
-MUTI_DIGIT='YYY'
-SINGLE_DIGIT='ZZZ'
+MUTI_DIGIT='muti_digit'
+SINGLE_DIGIT='single_digit'
 
 # model dir
 MODEL_DIR='model'
