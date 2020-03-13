@@ -18,3 +18,4 @@ src/__pycache__
 .DS_Store
 
 # IDEA dir
+.idea
