@@ -2,31 +2,28 @@
 
 ## Setup
 ```
-cd {project dir}
+git clone https://github.com/xinshoulzc/ticket_reg.git
+cd ticket_reg
 sh setup.sh
 ```
 
 ## Train DataSet
 please contact us to get image files
 ```
-cd {project dir}
 cp {downloaded files} dataset/raw
 ```
 
 ## Train
 ```
-cd {project dir}
 sh train.sh
 ```
 
 ## Eval
 ```
-cd {project dir}
 sh eval.sh
 ```
 
 ## infer
 ```
-cd {project dir}
 sh eval.sh YOUR_IMAGE_DIR OUTPUT_DIR
 ```
