@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # dataset dir
-DATASET_DIR='dataset'
+DATASET_DIR='datasets'
 # TODO:
 RAW='XXX'
 MUTI_DIGIT='YYY'

@@ -32,10 +32,10 @@ then
 fi
 
 # create dataset dir
-if [ ! -d "dataset/raw" ]
+if [ ! -d "datasets/raw" ]
 then
-  echo "create dataset dir"
-  mkdir -p dataset/raw
+  echo "create datasets dir"
+  mkdir -p datasets/raw
 fi
 
 install requirement package

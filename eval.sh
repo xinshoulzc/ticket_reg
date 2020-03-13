@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # eval dir
-EVAL_DIR='dataset/train'
+EVAL_DIR='datasets/train'
 ID=1
 
 RAW='XXX'
