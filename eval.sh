@@ -1,5 +1,7 @@
 #!/bin/sh
 
+DATASET_DIR='datasets'
+
 # eval dir
 EVAL_DIR='datasets/train'
 ID=1
@@ -53,6 +55,7 @@ then
   python3 src/digit_segment.py \
     --indir $DATASET_DIR/$MULTI_DIGIT \
     --outdir $DATASET_DIR/$SINGLE_DIGIT \
+    --mode ID \
     > log/infer_step2.log
   CheckCode $? 2
 
