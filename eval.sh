@@ -44,6 +44,7 @@ then
     --outdir $DATASET_DIR/$MULTI_DIGIT \
     > log/infer_step1.log
   elif [[ $1 == "2" ]]
+  then
     python3 src/get_barcode_area.py \
     --indir $DATASET_DIR/$RAW \
     --outdir $DATASET_DIR/$MULTI_DIGIT \
