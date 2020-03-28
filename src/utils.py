@@ -70,7 +70,10 @@ def load_infer_data(dir = "infer"):
     for subdir in subdirs:
         subdir = os.path.join(dataset_path, subdir)
         for fn in os.listdir(subdir):
-            imgs_paths.append(os.path.join(subdir, fn))
+            if os.path.isfile(os.path.join(subdir, fn)):
+                imgs_paths.append(os.path.join(subdir, fn))
+            else:
+                print("warning: ignore " + os.path.join(subdir, fn))
 
     # create img blocks
     imgs = np.zeros((len(imgs_paths), X_SIZE, Y_SIZE), dtype=np.int16)

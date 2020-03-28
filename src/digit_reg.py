@@ -1,7 +1,9 @@
 import tensorflow as tf
+import os
 import cv2 as cv
 import utils
 import argparse
+import traceback
 import sys
 
 X_SIZE, Y_SIZE = 28, 28
@@ -81,7 +83,7 @@ def train_main(inputdir, modeldir):
 
 def infer_main(inputdir, modeldir, outputdir):
     # load data
-    if len(outputdir) <= 0:
+    if outputdir is None or len(outputdir) <= 0:
         paths, x_test, y_test = utils.load_data_once(inputdir)
         train_size = int(len(paths) * TRAIN_RATE)
         paths, x_test, y_test = paths[train_size:], x_test[train_size:], y_test[train_size:]
@@ -100,7 +102,7 @@ def infer_main(inputdir, modeldir, outputdir):
             images: x_test,
             # labels: y_test,
         })
-    if len(outputdir) <= 0:
+    if outputdir is None or len(outputdir) <= 0:
         print("y_predict", y_predict)
         print("true label", y_test)
 
@@ -120,18 +122,20 @@ def infer_main(inputdir, modeldir, outputdir):
         print("all data", cnt, correct, correct / cnt)
         print("not zero data", cnt_, co_, co_/cnt_)
     else:
-        with open(outputdir, "w") as out:
-            for paths, label in zip(imgs_paths, y_predict):
-                out.write(path + "\t" + string(label) + "\n")
+        print(paths, y_predict)
+        with open(os.path.join(outputdir, "results"), "w") as out:
+            for x, y in zip(paths, y_predict):
+                out.write(x + "\t" + str(y) + "\n")
 
 
 
 if __name__ == "__main__":
+    print("start")
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("-i", "--inputdir", required=True)
-        parser.add_argument("-o", "--outputdir", required=True)
-        parser.add_argument("-o", "--modeldir", required=True)
+        parser.add_argument("-o", "--outputdir")
+        parser.add_argument("-d", "--modeldir", required=True)
         parser.add_argument("-m", "--mode", required=True)
         args = parser.parse_args()
         print("intputdir: ", args.inputdir, "outputdir: ", args.outputdir, "modeldir: ", args.modeldir, "mode: ", args.mode)
@@ -143,4 +147,5 @@ if __name__ == "__main__":
             print("UNKNOWN MODE")
             sys.exit(-1)
     except:
+        traceback.print_exc()
         sys.exit(-1)
