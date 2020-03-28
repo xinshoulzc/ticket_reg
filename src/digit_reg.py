@@ -85,9 +85,10 @@ def infer_main(inputdir, modeldir, outputdir):
         paths, x_test, y_test = utils.load_data_once(inputdir)
         train_size = int(len(paths) * TRAIN_RATE)
         paths, x_test, y_test = paths[train_size:], x_test[train_size:], y_test[train_size:]
+        print(x_test.shape, y_test.shape, " mode: eval")
     else:
-        paths, x_test, y_test = utils.load_data_once(outputdir)
-    print(x_test.shape, y_test.shape)
+        paths, x_test, _ = utils.load_infer_data(inputdir)
+        print(x_test.shape, " mode: infer")
 
     # inference process
     predict = infer()
@@ -99,25 +100,30 @@ def infer_main(inputdir, modeldir, outputdir):
             images: x_test,
             # labels: y_test,
         })
+    if len(outputdir) <= 0:
+        print("y_predict", y_predict)
+        print("true label", y_test)
 
-    print("y_predict", y_predict)
-    print("true label", y_test)
+        cnt, correct = 0, 0
+        cnt_, co_ = 0, 0
+        for k1, k2 in zip(y_predict, y_test):
+            # print(k1, k2)
+            if k2 != 0: cnt_ += 1
+            cnt += 1
+            if k1 == k2:
+                correct += 1
+                if k2 != 0: co_ += 1
+            else:
+                continue
+                # print(p, k1, k2)
 
-    cnt, correct = 0, 0
-    cnt_, co_ = 0, 0
-    for k1, k2 in zip(y_predict, y_test):
-        # print(k1, k2)
-        if k2 != 0: cnt_ += 1
-        cnt += 1
-        if k1 == k2:
-            correct += 1
-            if k2 != 0: co_ += 1
-        else:
-            continue
-            # print(p, k1, k2)
+        print("all data", cnt, correct, correct / cnt)
+        print("not zero data", cnt_, co_, co_/cnt_)
+    else:
+        with open(outputdir, "w") as out:
+            for paths, label in zip(imgs_paths, y_predict):
+                out.write(path + "\t" + string(label) + "\n")
 
-    print("all data", cnt, correct, correct / cnt)
-    print("not zero data", cnt_, co_, co_/cnt_)
 
 
 if __name__ == "__main__":

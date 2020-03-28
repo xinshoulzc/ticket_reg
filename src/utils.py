@@ -4,8 +4,6 @@ import cv2 as cv
 from tqdm import tqdm
 import random
 
-DATASET_DIR = "datasets"
-
 X_SIZE, Y_SIZE = 28, 28
 DATA_PATH, DATA_X, DATA_Y = None, None, None
 
@@ -54,42 +52,6 @@ def load_data(dir="datasets/train", exclude_labels = []):
     print("label 0 nums: ", cnt)
     return imgs_paths, imgs, labels
 
-
-# def load_data(dir = "train", exclude_labels = []):
-#     dataset_path = os.path.join(DATASET_DIR, dir)
-#
-#     fns = os.listdir(dataset_path)
-#     cnt = 0
-#     # fns = fns[:100]
-#     imgs_paths, imgs, labels = [], np.zeros((len(fns), X_SIZE, Y_SIZE), dtype=np.int16), np.zeros(len(fns), dtype=np.int8)
-#     print("load data, waiting...")
-#     if len(fns) > 500000:
-#         print("Use load_large_data function, test data too large")
-#         raise ValueError
-#     for i, fn in tqdm(enumerate(fns)):
-#         # parse label
-#         labelstr = fn.split(".", 1)[0].split("_")[-1]
-#         # try:
-#         #     if int(labelstr) == 0: continue
-#         # except ValueError:
-#         #     print(fn)
-#         if int(labelstr) == 0: cnt += 1
-#         labels[i] = int(labelstr)
-#         # save figure path
-#         image_path = os.path.join(dataset_path, fn)
-#         imgs_paths.append(image_path)
-#         # read figures
-#         img = cv.imread(image_path)
-#         img = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
-#         img = cv.resize(img, (X_SIZE, Y_SIZE))
-#         img = img / 255.0
-#         # print(img)
-#         imgs[i] = img
-#         # imgs = np.append(imgs, [img], axis=0)
-#     print("finish loading data")
-#     print("label 0 nums: ", cnt)
-#     return imgs_paths, imgs, labels
-
 def load_data_once(dir = "train"):
     global DATA_PATH, DATA_X, DATA_Y
     if DATA_PATH is None:
@@ -98,6 +60,30 @@ def load_data_once(dir = "train"):
     else:
         print("load data twice")
     return DATA_PATH, DATA_X, DATA_Y
+
+def load_infer_data(dir = "infer"):
+    dataset_path = dir
+
+    imgs_paths = []
+    cnt = 0
+    subdirs = os.listdir(dataset_path)
+    for subdir in subdirs:
+        subdir = os.path.join(dataset_path, subdir)
+        for fn in os.listdir(subdir):
+            imgs_paths.append(os.path.join(subdir, fn))
+
+    # create img blocks
+    imgs = np.zeros((len(imgs_paths), X_SIZE, Y_SIZE), dtype=np.int16)
+
+    for i, path in tqdm(enumerate(imgs_paths)):
+        # read figures
+        img = cv.imread(path)
+        img = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
+        img = cv.resize(img, (X_SIZE, Y_SIZE))
+        img = img / 255.0
+        imgs[i] = img
+
+    return imgs_paths, imgs, None
 
 
 if __name__ == "__main__":

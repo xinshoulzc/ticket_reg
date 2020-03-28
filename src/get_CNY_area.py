@@ -4,7 +4,7 @@ import sys
 import getopt
 import cv2
 import numpy as np
-from src.roi_locator import *
+from roi_locator import *
 
 
 def get_CNY_area(filename):
