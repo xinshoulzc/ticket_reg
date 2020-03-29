@@ -1,7 +1,9 @@
 import tensorflow as tf
+import os
 import cv2 as cv
 import utils
 import argparse
+import traceback
 import sys
 
 X_SIZE, Y_SIZE = 28, 28
@@ -81,13 +83,14 @@ def train_main(inputdir, modeldir):
 
 def infer_main(inputdir, modeldir, outputdir):
     # load data
-    if len(outputdir) <= 0:
+    if outputdir is None or len(outputdir) <= 0:
         paths, x_test, y_test = utils.load_data_once(inputdir)
         train_size = int(len(paths) * TRAIN_RATE)
         paths, x_test, y_test = paths[train_size:], x_test[train_size:], y_test[train_size:]
+        print(x_test.shape, y_test.shape, " mode: eval")
     else:
-        paths, x_test, y_test = utils.load_data_once(outputdir)
-    print(x_test.shape, y_test.shape)
+        paths, x_test, _ = utils.load_infer_data(inputdir)
+        print(x_test.shape, " mode: infer")
 
     # inference process
     predict = infer()
@@ -99,33 +102,40 @@ def infer_main(inputdir, modeldir, outputdir):
             images: x_test,
             # labels: y_test,
         })
+    if outputdir is None or len(outputdir) <= 0:
+        print("y_predict", y_predict)
+        print("true label", y_test)
 
-    print("y_predict", y_predict)
-    print("true label", y_test)
+        cnt, correct = 0, 0
+        cnt_, co_ = 0, 0
+        for k1, k2 in zip(y_predict, y_test):
+            # print(k1, k2)
+            if k2 != 0: cnt_ += 1
+            cnt += 1
+            if k1 == k2:
+                correct += 1
+                if k2 != 0: co_ += 1
+            else:
+                continue
+                # print(p, k1, k2)
 
-    cnt, correct = 0, 0
-    cnt_, co_ = 0, 0
-    for k1, k2 in zip(y_predict, y_test):
-        # print(k1, k2)
-        if k2 != 0: cnt_ += 1
-        cnt += 1
-        if k1 == k2:
-            correct += 1
-            if k2 != 0: co_ += 1
-        else:
-            continue
-            # print(p, k1, k2)
+        print("all data", cnt, correct, correct / cnt)
+        print("not zero data", cnt_, co_, co_/cnt_)
+    else:
+        print(paths, y_predict)
+        with open(os.path.join(outputdir, "results"), "w") as out:
+            for x, y in zip(paths, y_predict):
+                out.write(x + "\t" + str(y) + "\n")
 
-    print("all data", cnt, correct, correct / cnt)
-    print("not zero data", cnt_, co_, co_/cnt_)
 
 
 if __name__ == "__main__":
+    print("start")
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("-i", "--inputdir", required=True)
-        parser.add_argument("-o", "--outputdir", required=True)
-        parser.add_argument("-o", "--modeldir", required=True)
+        parser.add_argument("-o", "--outputdir")
+        parser.add_argument("-d", "--modeldir", required=True)
         parser.add_argument("-m", "--mode", required=True)
         args = parser.parse_args()
         print("intputdir: ", args.inputdir, "outputdir: ", args.outputdir, "modeldir: ", args.modeldir, "mode: ", args.mode)
@@ -137,4 +147,5 @@ if __name__ == "__main__":
             print("UNKNOWN MODE")
             sys.exit(-1)
     except:
+        traceback.print_exc()
         sys.exit(-1)

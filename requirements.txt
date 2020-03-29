@@ -1,4 +1,4 @@
-tensorboard==1.15.2
+tensorboard==1.15.0
 tensorflow==1.15.2
 tqdm==4.43.0
 numpy==1.16.4

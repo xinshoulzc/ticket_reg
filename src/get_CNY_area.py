@@ -1,3 +1,4 @@
+# import time
 import os
 import sys
 import getopt
@@ -5,7 +6,7 @@ import getopt
 
 import cv2
 import numpy as np
-from roi_locator import *
+from src.roi_locator import *
 
 
 def get_CNY_area(filename):

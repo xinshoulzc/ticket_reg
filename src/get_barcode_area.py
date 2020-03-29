@@ -4,7 +4,7 @@ import sys
 import getopt
 
 import cv2
-from src.barcode_roi_locator import *
+from barcode_roi_locator import *
 
 
 def get_barcode_area(filename):

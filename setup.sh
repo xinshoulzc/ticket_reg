@@ -38,7 +38,7 @@ then
   mkdir -p datasets/raw
 fi
 
-install requirement package
+# install requirement package
 echo "install requirement package, Waiting..."
 echo
 

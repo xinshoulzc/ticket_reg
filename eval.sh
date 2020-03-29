@@ -1,13 +1,14 @@
 #!/bin/sh
 
+DATASET_DIR='datasets'
+
 # eval dir
 EVAL_DIR='datasets/train'
 ID=1
 
 RAW='raw'
-MULTI_DIGIT='multi_digit'
-SINGLE_DIGIT='single_digit'
-RESULT='result'
+MULTI_DIGIT='infer_multi_digit'
+SINGLE_DIGIT='infer_single_digit'
 
 # model dir
 MODEL_DIR='model'
@@ -34,14 +35,30 @@ if [[ $2 != "" && $3 != "" ]]
 then
   RAW=$2
   OUTPUT_DIR=$3
+
+  # create multi_digit file dir
+  if [ ! -d $DATASET_DIR/$MULTI_DIGIT ]
+  then
+    echo "create $DATASET_DIR/$MULTI_DIGIT dir"
+    mkdir -p $DATASET_DIR/$MULTI_DIGIT
+  fi
+
+  # create single_digit file dir
+  if [ ! -d $DATASET_DIR/$SINGLE_DIGIT ]
+  then
+    echo "create $DATASET_DIR/$SINGLE_DIGIT dir"
+    mkdir -p $DATASET_DIR/$SINGLE_DIGIT
+  fi
+
   # step1 :
   if [[ $1 == "1" ]]
   then
   python3 src/get_CNY_area.py \
-    --indir $DATASET_DIR/$RAW \
+    --indir $RAW \
     --outdir $DATASET_DIR/$MULTI_DIGIT \
     > log/infer_step1.log
   elif [[ $1 == "2" ]]
+  then
     python3 src/get_barcode_area.py \
     --indir $DATASET_DIR/$RAW \
     --outdir $DATASET_DIR/$MULTI_DIGIT \
@@ -53,20 +70,21 @@ then
   python3 src/digit_segment.py \
     --indir $DATASET_DIR/$MULTI_DIGIT \
     --outdir $DATASET_DIR/$SINGLE_DIGIT \
+    --mode ID \
     > log/infer_step2.log
   CheckCode $? 2
 
   # step3
   python3 src/digit_reg.py \
     --inputdir $EVAL_DIR/$SINGLE_DIGIT \
-    --outputdir $OUTPUT_DIR/$RESULT \
+    --outputdir $OUTPUT_DIR \
     --modeldir $MODEL_DIR \
     --mode "eval" > log/infer_step3.log
   CheckCode $? 3
 else
   python3 src/digit_reg.py \
     --inputdir $EVAL_DIR \
-    --outputdir $MODEL_DIR \
+    --outputdir "" \
     --modeldir $MODEL_DIR \
     --mode "eval" > log/eval.log
 fi
