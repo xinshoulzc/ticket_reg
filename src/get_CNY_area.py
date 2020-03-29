@@ -1,10 +1,11 @@
-# import time
 import os
 import sys
 import getopt
+# import time
+
 import cv2
 import numpy as np
-from src.roi_locator import *
+from roi_locator import *
 
 
 def get_CNY_area(filename):
@@ -12,9 +13,9 @@ def get_CNY_area(filename):
     if src is None:
         return None
     ori_pic = src.copy()
-    H, W, _ = ori_pic.shape  # 原图尺寸H x W
+    H, W = ori_pic.shape[:2]  # 原图尺寸H x W
     src = resize_large(src)  # 太大的图片都缩小成1600的宽度
-    h, w, _ = src.shape  # 压缩后尺寸 h x w
+    h, w = src.shape[:2]  # 压缩后尺寸 h x w
     # cv2.imshow('compressed', src)
     roi_x1, roi_y1, roi_x2, roi_y2 = get_roi(src)
     # roi_w = roi_x2 - roi_x1
@@ -54,7 +55,7 @@ def get_CNY_area(filename):
         (rx, ry, rw, rh) = biggest_rect
         offset = (link_len - de_link_len) // 2
         result_x1, result_y1 = rx + offset, ry  # 压缩图片roi中，结果的左上坐标
-        result_x2, result_y2 = rx + rw - offset, ry + rh  # 压缩图片roi中，结果的右下坐标 TODO
+        result_x2, result_y2 = rx + rw - offset, ry + rh  # 压缩图片roi中，结果的右下坐标
 
         # 在未压缩的图ori_pic上绘制
         rate = (ROI_Y2 - ROI_Y1) / (roi_y2 - roi_y1)  # roi和ROI的尺寸比
@@ -67,7 +68,7 @@ def get_CNY_area(filename):
     return ROI  # 原图上的结果
 
 def resize_large(img):
-    h, w, _ = img.shape
+    h, w = img.shape[:2]
     if w <= 1600:
         return img
     target_w = 1600
@@ -80,7 +81,7 @@ def resize_large(img):
 
 #  去除背景蓝色细纹
 def del_background_grain(img):
-    h, w, _ = img.shape
+    h, w = img.shape[:2]
     HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)  # RGB 转为 HSV
     lowerblue0 = np.array([78, 43, 46])  # 蓝色的 Hmin, Smin, Vmin
     upperblue0 = np.array([100, 255, 255])  # 蓝色的 Hmax, Smax, Vmax
@@ -96,7 +97,7 @@ def del_background_grain(img):
 
 
 def getROI_fake(img):
-    h, w, _ = img.shape
+    h, w = img.shape[:2]
     x1 = int(w*0.70)
     y1 = int(h*0.67)
     x2 = int(w*0.90)
@@ -146,7 +147,7 @@ def get_contours(img, area_threshold):
     img = clean_ver(img)
     img = clean_hor(img)
 
-    h, w = img.shape
+    h, w = img.shape[:2]
     # 消除不规则凸起
     # 1.统计最大宽度
     max_len = 0
@@ -196,7 +197,7 @@ def get_contours(img, area_threshold):
     return big_contours
 
 def clean_ver(img):  # 消除细横线
-    h, w = img.shape
+    h, w = img.shape[:2]
     for i in range(h):
         for j in range(w):
             curr_pixel = img[i][j]
@@ -222,7 +223,7 @@ def clean_ver(img):  # 消除细横线
     return img
 
 def clean_hor(img):  # 消除细竖线
-    h, w = img.shape
+    h, w = img.shape[:2]
     for i in range(h):
         for j in range(w):
             curr_pixel = img[i][j]
@@ -246,7 +247,6 @@ def clean_hor(img):  # 消除细竖线
                 for j_del in range(j-left, j+right+1):
                     img[i][j_del] = 0
     return img
-
 
 
 def process(src_dir, dst_dir):
@@ -291,6 +291,6 @@ def main(argv):
     else:
         print("invalid folder")
 
-
 if __name__ == '__main__':
     main(sys.argv[1:])
+
