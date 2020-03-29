@@ -7,6 +7,7 @@ import getopt
 import cv2
 import numpy as np
 from src.roi_locator import *
+from src.logger import *
 
 
 def get_CNY_area(filename):
@@ -256,22 +257,22 @@ def process(src_dir, dst_dir):
     if not os.path.exists(dst_dir):
         os.mkdir(dst_dir)
     for p in p_list:
-        print("getting CNY area:", p)
+        logger.info("start getting CNY area: " + p)
         try:
             file = os.path.join(src_dir, p)
             result_img = get_CNY_area(file)
             if result_img is not None:
                 out_file = os.path.join(dst_dir, p)
                 cv2.imwrite(out_file, result_img)
-                print(count)
+                logger.info(p + " CNY area successful, No." + str(count))
             else:
-                print("get CNY failed at:", p)
+                logger.warning("get CNY area failed at: " + p)
         except Exception:
-            print("Exception on: get_CNY_area.py --", p)
+            logger.warning("Exception on: get_CNY_area.py-" + p)
             sys.exit(3)
         finally:
             count += 1
-    print("Finished: " + str(count) + " CNY areas")
+    logger.info("Finished: got " + str(count) + " CNY areas")
 
 
 def main(argv):
@@ -280,7 +281,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "h", ["indir=", "outdir="])
     except getopt.GetoptError:
-        print('get_CNY_area.py --indir <inputdir> --outdir <outputdir>')
+        logger.error('getOptError: get_CNY_area.py --indir <inputdir> --outdir <outputdir>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == "--indir":
@@ -290,7 +291,7 @@ def main(argv):
     if os.path.isdir(inputdir) and os.path.isdir(outputdir):
         process(inputdir, outputdir)
     else:
-        print("invalid folder")
+        logger.error("invalid folder")
 
 if __name__ == '__main__':
     main(sys.argv[1:])

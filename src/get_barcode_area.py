@@ -4,8 +4,8 @@ import sys
 import getopt
 
 import cv2
-from barcode_roi_locator import *
-
+from src.barcode_roi_locator import *
+from src.logger import *
 
 def get_barcode_area(filename):
     src = cv2.imread(filename)
@@ -85,22 +85,22 @@ def process(src_dir, dst_dir):
     if not os.path.exists(dst_dir):
         os.mkdir(dst_dir)
     for p in p_list:
-        print("getting barcode area:", p)
+        logger.info("start getting barcode area: " + p)
         try:
             file = os.path.join(src_dir, p)
             result_img = get_barcode_area(file)
             if result_img is not None:
                 out_file = os.path.join(dst_dir, p)
                 cv2.imwrite(out_file, result_img)
-                print(count)
+                logger.info(p + " barcode area successful, No." + str(count))
             else:
-                print("get barcode failed at:", p)
+                logger.warning("get barcode failed at: " + p)
         except Exception:
-            print("Exception on: get_barcode_area.py-", p)
+            logger.warning("Exception on: get_barcode_area.py-" + p)
             sys.exit(3)
         finally:
             count += 1
-    print("Finished: " + str(count) + " barcode areas")
+    logger.info("Finished: got " + str(count) + " barcode areas")
 
 
 def main(argv):
@@ -109,7 +109,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "h", ["indir=", "outdir="])
     except getopt.GetoptError:
-        print('get_barcode_area.py --indir <inputdir> --outdir <outputdir>')
+        logger.error('getOptError: get_barcode_area.py --indir <inputdir> --outdir <outputdir>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == "--indir":
@@ -119,7 +119,7 @@ def main(argv):
     if os.path.isdir(inputdir) and os.path.isdir(outputdir):
         process(inputdir, outputdir)
     else:
-        print("invalid folder")
+        logger.error("invalid folder")
 
 
 if __name__ == '__main__':
