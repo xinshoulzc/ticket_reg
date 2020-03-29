@@ -70,13 +70,13 @@ then
   python3 src/digit_segment.py \
     --indir $DATASET_DIR/$MULTI_DIGIT \
     --outdir $DATASET_DIR/$SINGLE_DIGIT \
-    --mode ID \
+    --mode $ID \
     > log/infer_step2.log
   CheckCode $? 2
 
   # step3
   python3 src/digit_reg.py \
-    --inputdir $EVAL_DIR/$SINGLE_DIGIT \
+    --inputdir $DATASET_DIR/$SINGLE_DIGIT \
     --outputdir $OUTPUT_DIR \
     --modeldir $MODEL_DIR \
     --mode "eval" > log/infer_step3.log

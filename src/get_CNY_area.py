@@ -6,8 +6,8 @@ import getopt
 
 import cv2
 import numpy as np
-from src.roi_locator import *
-from src.logger import *
+from roi_locator import *
+from logger import *
 
 
 def get_CNY_area(filename):
@@ -262,6 +262,7 @@ def process(src_dir, dst_dir):
             file = os.path.join(src_dir, p)
             result_img = get_CNY_area(file)
             if result_img is not None:
+                p = p.split(".")[0] + ".png"
                 out_file = os.path.join(dst_dir, p)
                 cv2.imwrite(out_file, result_img)
                 logger.info(p + " CNY area successful, No." + str(count))
