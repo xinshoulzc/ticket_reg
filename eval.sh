@@ -60,7 +60,7 @@ then
   elif [[ $1 == "2" ]]
   then
     python3 src/get_barcode_area.py \
-    --indir $DATASET_DIR/$RAW \
+    --indir $RAW \
     --outdir $DATASET_DIR/$MULTI_DIGIT \
     > log/infer_step1.log
   fi
