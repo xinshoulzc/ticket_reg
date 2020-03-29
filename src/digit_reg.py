@@ -5,6 +5,7 @@ import utils
 import argparse
 import traceback
 import sys
+from logger import logger
 
 X_SIZE, Y_SIZE = 28, 28
 TRAIN_RATE = 0.9
@@ -60,7 +61,6 @@ def train_main(inputdir, modeldir):
         # summary_merge = tf.summary.merge_all()
         # f_summary = tf.summary.FileWriter(logdir="log", graph=sess.graph)
         for epoch in range(epochs):
-            print(epoch, x_train.shape[0])
             for i in range(0, x_train.shape[0], batch_size):
                 x_batch = x_train[i:i + batch_size]
                 y_batch = y_train[i:i + batch_size]
@@ -75,11 +75,11 @@ def train_main(inputdir, modeldir):
                 # f_summary.add_summary(summary=summary_tmp, global_step=epoch)
                 batch_id = epoch * (x_train.shape[0] // batch_size * batch_size) + i
                 if batch_id % 4000 == 0:
-                    print("epoch: %d, batch id: %d, loss: %f" %(epoch, batch_id, train_loss))
+                    logger.info("epoch: %d, batch id: %d, loss: %f" %(epoch, batch_id, train_loss))
 
         saver.save(sess, os.path.join(modeldir, "mnist.cpkt"))
 
-        print("train finished...")
+        logger.info("train finished...")
 
 def infer_main(inputdir, modeldir, outputdir):
     # load data
@@ -87,10 +87,11 @@ def infer_main(inputdir, modeldir, outputdir):
         paths, x_test, y_test = utils.load_data_once(inputdir)
         train_size = int(len(paths) * TRAIN_RATE)
         paths, x_test, y_test = paths[train_size:], x_test[train_size:], y_test[train_size:]
-        print(x_test.shape, y_test.shape, " mode: eval")
+        logger.info("x_test shape: {}".format(str(x_test.shape)))
+        logger.info("y_test shape: {}".format(str(y_test.shape)))
     else:
         paths, x_test, _ = utils.load_infer_data(inputdir)
-        print(x_test.shape, " mode: infer")
+        logger.info("x_test shape: {}".format(str(x_test.shape)))
 
     # inference process
     predict = infer()
@@ -103,8 +104,8 @@ def infer_main(inputdir, modeldir, outputdir):
             # labels: y_test,
         })
     if outputdir is None or len(outputdir) <= 0:
-        print("y_predict", y_predict)
-        print("true label", y_test)
+        logger.debug("y_predict, length: {:d}".format(len(y_predict)))
+        logger.debug("true label, length: {:d}".format(len(y_test)))
 
         cnt, correct = 0, 0
         cnt_, co_ = 0, 0
@@ -118,11 +119,13 @@ def infer_main(inputdir, modeldir, outputdir):
             else:
                 continue
                 # print(p, k1, k2)
-
-        print("all data", cnt, correct, correct / cnt)
-        print("not zero data", cnt_, co_, co_/cnt_)
+        logger.info("all data, length: {:d}, correct: {:d}, precision: {:f}".format(
+            cnt, correct, correct / cnt))
+        logger.info("all data except label 0, length: {:d}, corrent: {:d}, presicion: {:f}".format(
+            cnt_, co_, co_ / cnt_))
     else:
-        print(paths, y_predict)
+        logger.debug("infer image length: {:d}, predict label length: {:d}".format(
+            len(paths), len(y_predict)))
         with open(os.path.join(outputdir, "results"), "w") as out:
             for x, y in zip(paths, y_predict):
                 out.write(x + "\t" + str(y) + "\n")
@@ -130,7 +133,6 @@ def infer_main(inputdir, modeldir, outputdir):
 
 
 if __name__ == "__main__":
-    print("start")
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument("-i", "--inputdir", required=True)
@@ -138,13 +140,16 @@ if __name__ == "__main__":
         parser.add_argument("-d", "--modeldir", required=True)
         parser.add_argument("-m", "--mode", required=True)
         args = parser.parse_args()
-        print("intputdir: ", args.inputdir, "outputdir: ", args.outputdir, "modeldir: ", args.modeldir, "mode: ", args.mode)
+        logger.info("intputdir: {}".format(args.inputdir))
+        logger.info("outputdir: {}".format(args.outputdir))
+        logger.info("modeldir: {}".format(args.modeldir))
+        logger.info("mode: {}".format(args.mode))
         if args.mode == "train":
             train_main(args.inputdir, args.modeldir)
         elif args.mode == "eval":
             infer_main(args.inputdir, args.modeldir, args.outputdir)
         else:
-            print("UNKNOWN MODE")
+            logger.error("UNKNOWN MODE: {}".format(args.mode))
             sys.exit(-1)
     except:
         traceback.print_exc()
