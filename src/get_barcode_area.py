@@ -18,24 +18,39 @@ def get_barcode_area(filename):
     roi = cutROI(src, roi_x1, roi_y1, roi_x2, roi_y2 + 5)
     rgb_roi = roi.copy()
     roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    fixed_t = cv2.threshold(roi, 160, 255, cv2.THRESH_BINARY_INV)[1]  # 阈值可以低一些
+    a = 1.5
+    enhanced = roi * float(a)
+    enhanced[enhanced > 255] = 255
+    enhanced = np.round(enhanced)
+    enhanced = enhanced.astype(np.uint8)
+    # cv2.imshow("对比度增强", enhanced)
 
-    element_link = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 1))
-    dilation_ed = cv2.dilate(fixed_t, element_link, iterations=1)  # 膨胀一次
+
+    fixed_t = cv2.threshold(enhanced, 230, 255, cv2.THRESH_BINARY_INV)[1]  # 阈值可以低一些
+    # cv2.imshow("thr", fixed_t)
+
+    cleaned = clean_ver(fixed_t)
+
+    # 连接条形码
+    element_link = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 2))
+    dilation_ed = cv2.dilate(cleaned, element_link, iterations=1)  # 膨胀一次
     erosion_ed = cv2.erode(dilation_ed, element_link, iterations=1)  # 腐蚀一次
+    # cv2.imshow("linked", erosion_ed)
 
     biggest_rect = get_biggest_contour(erosion_ed)
     brx1, bry1, brw, brh = biggest_rect  # 获得条形码的下边缘 （br = biggest rectangle）
 
     # 绘制结果(条形码的底部开始)
-    res = cv2.rectangle(rgb_roi, (min(brx1 + 5, int(w*0.20)), bry1+brh), (brx1 + brw - 5, h), (0, 128, 255), 2)
+    res = cv2.rectangle(rgb_roi, (min(brx1 + 15, int(w*0.20)), bry1+brh), (brx1 + brw - 10, bry1 + brh + 40), (0, 128, 255), 2)
+    #                                         左上顶点                              右下顶点
 
     return res
 
 def resize_large(img):
     h, w, _ = img.shape
-    if w <= 1600:
-        return img
+    # if w <= 1600:
+    #     return img
+    #  // 现在统一成1600宽度
     target_w = 1600
     target_h = int(h * target_w / w)
     de_size = (target_w, target_h)  # 注意：是先w再h，与以往不同
@@ -63,6 +78,32 @@ def get_biggest_contour(img):
 def cutROI(img, x1, y1, x2, y2):  # 左上角 和 右下角的坐标
     roi = img[y1: y2, x1: x2]
     return roi
+
+def clean_ver(img):  # 消除细横线
+    h, w = img.shape[:2]
+    for i in range(h):
+        for j in range(w):
+            curr_pixel = img[i][j]
+            if curr_pixel == 0:
+                continue
+            i_f, j_f = i, j
+            above, under = 0, 0
+            #  纵向 （消除横线）
+            while i_f < h - 1 and img[i_f][j] == 255:  # 往下走
+                i_f += 1
+                under += 1
+                if under > 10:
+                    continue
+            i_f = i
+            while i_f > 0 and img[i_f][j] == 255:  # 往上走
+                i_f -= 1
+                above += 1
+                if above > 10:
+                    continue
+            if under + above < 9:  # 去掉粗细小于等于10的横线  （因为link_element的高度是10）
+                for i_del in range(i - above, i + under + 1):
+                    img[i_del][j] = 0
+    return img
 
 
 
