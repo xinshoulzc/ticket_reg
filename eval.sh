@@ -75,12 +75,23 @@ then
   CheckCode $? 2
 
   # step3
+  if [[ $1 == "1" ]]
+  then
+  python3 src/digit_reg.py \
+    --inputdir $EVAL_DIR/$SINGLE_DIGIT \
+    --outputdir $OUTPUT_DIR \
+    --modeldir $MODEL_DIR \
+    --mode "price" > log/infer_step3.log
+  elif [[ $1 == "2" ]]
+  then
   python3 src/digit_reg.py \
     --inputdir $DATASET_DIR/$SINGLE_DIGIT \
     --outputdir $OUTPUT_DIR \
     --modeldir $MODEL_DIR \
-    --mode "eval" > log/infer_step3.log
+    --mode "barcode" > log/infer_step3.log
+  fi
   CheckCode $? 3
+
 else
   python3 src/digit_reg.py \
     --inputdir $EVAL_DIR \

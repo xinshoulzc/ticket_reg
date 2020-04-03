@@ -1,2 +1,2 @@
-model_checkpoint_path: "mnist.cpkt"
-all_model_checkpoint_paths: "mnist.cpkt"
+model_checkpoint_path: "barcode.ckpt"
+all_model_checkpoint_paths: "barcode.ckpt"
