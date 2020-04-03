@@ -4,6 +4,7 @@ import cv2 as cv
 from tqdm import tqdm
 import random
 
+
 X_SIZE, Y_SIZE = 28, 28
 DATA_PATH, DATA_X, DATA_Y = None, None, None
 
@@ -63,17 +64,16 @@ def load_data_once(dir = "train"):
 
 def load_infer_data(dir = "infer"):
     dataset_path = dir
-
     imgs_paths = []
     cnt = 0
-    subdirs = os.listdir(dataset_path)
-    for subdir in subdirs:
-        subdir = os.path.join(dataset_path, subdir)
-        for fn in os.listdir(subdir):
-            if os.path.isfile(os.path.join(subdir, fn)):
-                imgs_paths.append(os.path.join(subdir, fn))
-            else:
-                print("warning: ignore " + os.path.join(subdir, fn))
+    # subdirs = os.listdir(dataset_path)
+    # for subdir in subdirs:
+    # subdir = os.path.join(dataset_path, subdir)
+    for fn in os.listdir(dir):
+        if os.path.isfile(os.path.join(dir, fn)):
+            imgs_paths.append(os.path.join(dir, fn))
+        else:
+            print("warning: ignore " + os.path.join(dir, fn))
 
     # create img blocks
     imgs = np.zeros((len(imgs_paths), X_SIZE, Y_SIZE), dtype=np.int16)

@@ -4,8 +4,8 @@ import sys
 import getopt
 
 import cv2
-from src.barcode_roi_locator import *
-from src.logger import *
+from barcode_roi_locator import *
+from logger import *
 
 def get_barcode_area(filename):
     src = cv2.imread(filename)
@@ -131,6 +131,7 @@ def process(src_dir, dst_dir):
             file = os.path.join(src_dir, p)
             result_img = get_barcode_area(file)
             if result_img is not None:
+                p = p.split(".")[0] + ".png"
                 out_file = os.path.join(dst_dir, p)
                 cv2.imwrite(out_file, result_img)
                 logger.info(p + " barcode area successful, No." + str(count))
@@ -160,6 +161,7 @@ def main(argv):
     if os.path.isdir(inputdir) and os.path.isdir(outputdir):
         process(inputdir, outputdir)
     else:
+        logger.info("%s %s", inputdir, outputdir)
         logger.error("invalid folder")
 
 

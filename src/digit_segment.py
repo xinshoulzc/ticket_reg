@@ -3,6 +3,8 @@ import numpy as np
 import cv2 as cv
 import copy as cp
 import sys, getopt
+from logger import logger
+import traceback
 # import shutil
 
 DEBUG = 0
@@ -170,7 +172,7 @@ def find_digit_zone(img, break_threshold):
 
         px_num = 0
         for i in range(h):
-            if img[i][j] == 0:
+            if img[i][j].all() == 0:
                 px_num += 1
 
         if px_num > break_threshold:
@@ -308,13 +310,14 @@ def process(src_dir, dst_dir, mode):
         if os.path.isfile(file):
             img = cv.imread(file)
             if img is None:
-                print("Open image 「" + file + "」failed.")
+                logger.error("Open image 「" + file + "」failed.")
                 continue
             roi = get_roi_img(img, mark_color)
             if roi is None:
-                print("Image 「"+ file + "」 has no roi area.")
+                logger.error("Image 「"+ file + "」 has no roi area.")
                 continue
             digit_imgs = roi_to_digit_img(roi, mode)
+            logger.info("Segment finished: Got %d digits", len(digit_imgs))
             for i, digit in enumerate(digit_imgs):
                 cv.imwrite(os.path.join(dst_dir, add_suffix(entry, str(i))), digit)
 
@@ -331,12 +334,12 @@ def main(argv):
                 outputdir = arg
             elif opt == "--mode":
                 mode = arg
-        process(inputdir, outputdir, mode)
+        process(inputdir, outputdir, int(mode))
     except getopt.GetoptError:
         print('Usage: digit_segment.py --indir <inputdir> --outdir <outputdir> --mode <mode>')
         sys.exit(-1)
     except Exception as e:
-        print('Error: ', e)
+        logger.error(traceback.print_exc())
         sys.exit(-2)
 
 
