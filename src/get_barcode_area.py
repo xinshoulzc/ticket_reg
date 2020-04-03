@@ -41,7 +41,7 @@ def get_barcode_area(filename):
     brx1, bry1, brw, brh = biggest_rect  # 获得条形码的下边缘 （br = biggest rectangle）
 
     # 绘制结果(条形码的底部开始)
-    res = cv2.rectangle(rgb_roi, (min(brx1 + 15, int(w*0.20)), bry1+brh), (brx1 + brw - 10, bry1 + brh + 40), (0, 128, 255), 2)
+    res = cv2.rectangle(rgb_roi, (min(brx1 + 15, int(w*0.20)), bry1+brh), (brx1 + brw - 10, min(bry1 + brh + 40, h)), (0, 128, 255), 2)
     #                                         左上顶点                              右下顶点
 
     return res
@@ -139,7 +139,7 @@ def process(src_dir, dst_dir):
                 logger.warning("get barcode failed at: " + p)
         except Exception:
             logger.warning("Exception on: get_barcode_area.py-" + p)
-            sys.exit(3)
+            continue
         finally:
             count += 1
     logger.info("Finished: got " + str(count) + " barcode areas")
