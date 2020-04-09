@@ -1,12 +1,10 @@
-# import time
 import os
 import sys
 import getopt
-# import time
 
 import cv2
 import numpy as np
-from roi_locator import *
+from roi_locator import get_roi
 from logger import *
 
 
@@ -68,6 +66,7 @@ def get_CNY_area(filename):
         cv2.rectangle(ROI, (result_X1 -e, result_Y1 -e), (result_X2 +e, result_Y2 +e), (0, 128, 0), int(2*rate))
 
     return ROI  # 原图上的结果
+
 
 def resize_large(img):
     h, w = img.shape[:2]
@@ -198,6 +197,7 @@ def get_contours(img, area_threshold):
     # cv2.imshow('with contours', rgb_img)
     return big_contours
 
+
 def clean_ver(img):  # 消除细横线
     h, w = img.shape[:2]
     for i in range(h):
@@ -211,18 +211,19 @@ def clean_ver(img):  # 消除细横线
             while i_f < h - 1 and img[i_f][j] == 255:  # 往下走
                 i_f += 1
                 under += 1
-                if under > 10:
-                    continue
+                if under >= 9:
+                    break
             i_f = i
             while i_f > 0 and img[i_f][j] == 255:  # 往上走
                 i_f -= 1
                 above += 1
-                if above > 10:
-                    continue
+                if above >= 9:
+                    break
             if under + above < 9:  # 去掉粗细小于等于10的横线  （因为link_element的高度是10）
                 for i_del in range(i - above, i + under + 1):
                     img[i_del][j] = 0
     return img
+
 
 def clean_hor(img):  # 消除细竖线
     h, w = img.shape[:2]
@@ -237,14 +238,14 @@ def clean_hor(img):  # 消除细竖线
             while j_f < w-1 and img[i][j_f] == 255:  # 向右走
                 j_f += 1
                 right += 1
-                if right > 8:
-                    continue
+                if right >= 7:
+                    break
             j_f = j
             while j_f > 0 and img[i][j_f] == 255:  # 向左走
                 j_f -= 1
                 left += 1
-                if left > 8:
-                    continue
+                if left >= 7:
+                    break
             if left + right < 7:    # 去掉粗细小于等于7的竖线（像素左右各有3个点）
                 for j_del in range(j-left, j+right+1):
                     img[i][j_del] = 0
@@ -270,7 +271,7 @@ def process(src_dir, dst_dir):
                 logger.warning("get CNY area failed at: " + p)
         except Exception:
             logger.warning("Exception on: get_CNY_area.py-" + p)
-            sys.exit(3)
+            continue
         finally:
             count += 1
     logger.info("Finished: got " + str(count) + " CNY areas")
@@ -293,6 +294,7 @@ def main(argv):
         process(inputdir, outputdir)
     else:
         logger.error("invalid folder")
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
