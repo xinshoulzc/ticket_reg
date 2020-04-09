@@ -61,7 +61,7 @@ def infer():
 def train_main(inputdir, modeldir, train_mode):
     if train_mode == TRAIN_MODE.PRICE:
         paths, x_train, y_train = utils.load_train_data(["datasets/train"], [TRAIN_MODE.PRICE])
-        model_name = "price.ckpt"
+        model_name = "mnist.cpkt"
     elif train_mode == TRAIN_MODE.PRINT_DATASET:
         # TODO: data split, only print dataset are split
         paths, x_train, y_train = utils.load_train_data(
@@ -81,9 +81,9 @@ def train_main(inputdir, modeldir, train_mode):
 
     # train process
     if train_mode == TRAIN_MODE.PRINT_DATASET:
-        train_ops = train(aug=True)
+        train_ops = train(aug=False)
     elif train_mode == TRAIN_MODE.BARCODE:
-        train_ops = train(aug=True)
+        train_ops = train(aug=False)
     else:
         train_ops = train(aug=False)
     saver = tf.train.Saver(max_to_keep=2)
@@ -118,7 +118,7 @@ def infer_main(inputdir, modeldir, outputdir, eval_mode):
     # select model
     if eval_mode == "price":
         train_mode = TRAIN_MODE.PRICE
-        model_name = "price.ckpt"
+        model_name = "mnist.cpkt"
     elif eval_mode == "barcode":
         train_mode = TRAIN_MODE.BARCODE
         model_name = "barcode.ckpt"
