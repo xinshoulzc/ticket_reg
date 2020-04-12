@@ -29,14 +29,11 @@ def get_barcode_area(filename):
     fixed_t = cv2.threshold(enhanced, 230, 255, cv2.THRESH_BINARY_INV)[1]  # 阈值可以低一些
     # cv2.imshow("thr", fixed_t)
 
-
-    # cleaned_ver = clean_ver(fixed_t)
-
     # 连接条形码
     element_link = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 2))
     dilation_ed = cv2.dilate(fixed_t, element_link, iterations=1)  # 膨胀一次
     erosion_ed = cv2.erode(dilation_ed, element_link, iterations=1)  # 腐蚀一次
-    cv2.imshow("linked", erosion_ed)
+    # cv2.imshow("linked", erosion_ed)
 
     ## 给图像四周添加一圈黑白边(方便开操作消除细线)
     for j in range(w):
@@ -46,19 +43,16 @@ def get_barcode_area(filename):
         erosion_ed[i][0] = 0
         erosion_ed[i][w-1] = 0
 
-    # cleaned_hor = clean_hor(erosion_ed)
-    # cv2.imshow("遍历消除竖线", cleaned_hor)
-
 
     clean_element_ver = cv2.getStructuringElement(cv2.MORPH_RECT, (30, 1))
     clean_ver_e_ed = cv2.erode(erosion_ed, clean_element_ver, iterations=1)  # 腐蚀一次
     clean_ver_d_ed = cv2.dilate(clean_ver_e_ed, clean_element_ver, iterations=1)  # 膨胀一次
-    cv2.imshow("cleaned_ver_line", clean_ver_d_ed)
+    # cv2.imshow("cleaned_ver_line", clean_ver_d_ed)
 
     clean_element_hor = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 7))
     clean_hor_e_ed = cv2.erode(clean_ver_d_ed, clean_element_hor, iterations=1)  # 腐蚀一次
     clean_hor_d_ed = cv2.dilate(clean_hor_e_ed, clean_element_hor, iterations=1)  # 膨胀一次
-    cv2.imshow("cleaned_hor_line", clean_hor_d_ed)
+    # cv2.imshow("cleaned_hor_line", clean_hor_d_ed)
 
     biggest_rect = get_biggest_contour(clean_hor_d_ed)
     brx1, bry1, brw, brh = biggest_rect  # 获得条形码的下边缘 （br = biggest rectangle）
