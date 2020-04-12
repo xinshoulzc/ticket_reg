@@ -29,18 +29,38 @@ def get_barcode_area(filename):
     fixed_t = cv2.threshold(enhanced, 230, 255, cv2.THRESH_BINARY_INV)[1]  # 阈值可以低一些
     # cv2.imshow("thr", fixed_t)
 
-    cleaned_ver = clean_ver(fixed_t)
+
+    # cleaned_ver = clean_ver(fixed_t)
 
     # 连接条形码
     element_link = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 2))
-    dilation_ed = cv2.dilate(cleaned_ver, element_link, iterations=1)  # 膨胀一次
+    dilation_ed = cv2.dilate(fixed_t, element_link, iterations=1)  # 膨胀一次
     erosion_ed = cv2.erode(dilation_ed, element_link, iterations=1)  # 腐蚀一次
-    # cv2.imshow("linked", erosion_ed)
+    cv2.imshow("linked", erosion_ed)
 
-    cleaned_hor = clean_hor(erosion_ed)
-    # cv2.imshow("cleaned hor", cleaned_hor)
+    ## 给图像四周添加一圈黑白边(方便开操作消除细线)
+    for j in range(w):
+        erosion_ed[0][j] = 0
+        erosion_ed[h-1][j] = 0
+    for i in range(h):
+        erosion_ed[i][0] = 0
+        erosion_ed[i][w-1] = 0
 
-    biggest_rect = get_biggest_contour(cleaned_hor)
+    # cleaned_hor = clean_hor(erosion_ed)
+    # cv2.imshow("遍历消除竖线", cleaned_hor)
+
+
+    clean_element_ver = cv2.getStructuringElement(cv2.MORPH_RECT, (30, 1))
+    clean_ver_e_ed = cv2.erode(erosion_ed, clean_element_ver, iterations=1)  # 腐蚀一次
+    clean_ver_d_ed = cv2.dilate(clean_ver_e_ed, clean_element_ver, iterations=1)  # 膨胀一次
+    cv2.imshow("cleaned_ver_line", clean_ver_d_ed)
+
+    clean_element_hor = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 7))
+    clean_hor_e_ed = cv2.erode(clean_ver_d_ed, clean_element_hor, iterations=1)  # 腐蚀一次
+    clean_hor_d_ed = cv2.dilate(clean_hor_e_ed, clean_element_hor, iterations=1)  # 膨胀一次
+    cv2.imshow("cleaned_hor_line", clean_hor_d_ed)
+
+    biggest_rect = get_biggest_contour(clean_hor_d_ed)
     brx1, bry1, brw, brh = biggest_rect  # 获得条形码的下边缘 （br = biggest rectangle）
 
     buttom_y = min(bry1 + brh + 40, h)
@@ -85,58 +105,58 @@ def cutROI(img, x1, y1, x2, y2):  # 左上角 和 右下角的坐标
     return roi
 
 
-def clean_ver(img):  # 消除细横线
-    h, w = img.shape[:2]
-    for i in range(h):
-        for j in range(w):
-            curr_pixel = img[i][j]
-            if curr_pixel == 0:
-                continue
-            i_f, j_f = i, j
-            above, under = 0, 0
-            #  纵向 （消除横线）
-            while i_f < h - 1 and img[i_f][j] == 255:  # 往下走
-                i_f += 1
-                under += 1
-                if under >= 9:
-                    break
-            i_f = i
-            while i_f > 0 and img[i_f][j] == 255:  # 往上走
-                i_f -= 1
-                above += 1
-                if above >= 9:
-                    break
-            if under + above < 9:  # 去掉粗细小于等于10的横线  （因为link_element的高度是10）
-                for i_del in range(i - above, i + under + 1):
-                    img[i_del][j] = 0
-    return img
-
-
-def clean_hor(img):  # 消除细竖线
-    h, w = img.shape[:2]
-    for i in range(h):
-        for j in range(w):
-            curr_pixel = img[i][j]
-            if curr_pixel == 0:
-                continue
-            i_f, j_f = i, j
-            above, under, left, right = 0, 0, 0, 0
-            #  横向 （消除竖线）
-            while j_f < w-1 and img[i][j_f] == 255:  # 向右走
-                j_f += 1
-                right += 1
-                if right >= 30:
-                    break
-            j_f = j
-            while j_f > 0 and img[i][j_f] == 255:  # 向左走
-                j_f -= 1
-                left += 1
-                if left >= 30:
-                    break
-            if left + right < 30:    # 去掉粗细小于等于30的竖线
-                for j_del in range(j-left, j+right+1):
-                    img[i][j_del] = 0
-    return img
+# def clean_ver(img):  # 消除细横线
+#     h, w = img.shape[:2]
+#     for i in range(h):
+#         for j in range(w):
+#             curr_pixel = img[i][j]
+#             if curr_pixel == 0:
+#                 continue
+#             i_f, j_f = i, j
+#             above, under = 0, 0
+#             #  纵向 （消除横线）
+#             while i_f < h - 1 and img[i_f][j] == 255:  # 往下走
+#                 i_f += 1
+#                 under += 1
+#                 if under >= 9:
+#                     break
+#             i_f = i
+#             while i_f > 0 and img[i_f][j] == 255:  # 往上走
+#                 i_f -= 1
+#                 above += 1
+#                 if above >= 9:
+#                     break
+#             if under + above < 9:  # 去掉粗细小于等于9的横线  （因为link_element的高度是10）
+#                 for i_del in range(i - above, i + under + 1):
+#                     img[i_del][j] = 0
+#     return img
+#
+#
+# def clean_hor(img):  # 消除细竖线
+#     h, w = img.shape[:2]
+#     for i in range(h):
+#         for j in range(w):
+#             curr_pixel = img[i][j]
+#             if curr_pixel == 0:
+#                 continue
+#             i_f, j_f = i, j
+#             above, under, left, right = 0, 0, 0, 0
+#             #  横向 （消除竖线）
+#             while j_f < w-1 and img[i][j_f] == 255:  # 向右走
+#                 j_f += 1
+#                 right += 1
+#                 if right >= 30:
+#                     break
+#             j_f = j
+#             while j_f > 0 and img[i][j_f] == 255:  # 向左走
+#                 j_f -= 1
+#                 left += 1
+#                 if left >= 30:
+#                     break
+#             if left + right < 30:    # 去掉粗细小于等于30的竖线
+#                 for j_del in range(j-left, j+right+1):
+#                     img[i][j_del] = 0
+#     return img
 
 
 def process(src_dir, dst_dir):

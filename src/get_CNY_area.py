@@ -22,16 +22,17 @@ def get_CNY_area(filename):
     # roi_h = roi_y2 - roi_y1
     roi = cutROI(src.copy(), roi_x1, roi_y1, roi_x2, roi_y2)
     no_grain = del_background_grain(roi.copy())  # 去除后面的蓝色纹路，返回一个RGB图像的R通道
-    thresholded = threshold_binary(no_grain.copy())  # 二值化
+    binary_ed = threshold_binary(no_grain.copy())  # 二值化
 
     element_size = 3
-    without_lines = open_operation(thresholded, element_size)  # 大致去除横竖直线
-    # cv2.imshow('first clean', without_lines)
+    without_hor_line = open_operation(binary_ed, element_size, 1)  # 大致去除竖细线
+    without_ver_line = open_operation(without_hor_line, 1, element_size)  # 大致去除横细线
+    # cv2.imshow('simple clean', without_ver_line)
 
     link_len = 70
     de_link_len = 60
     link_h = 9
-    numbers_linked = link_numbers(without_lines, link_len, de_link_len, link_h)  # 把分离的数字都连在一起
+    numbers_linked = link_numbers(without_ver_line, link_len, de_link_len, link_h)  # 把分离的数字都连在一起
 
     area_threshold = 1000 + (link_len - de_link_len) * link_h
     contours = get_contours(numbers_linked, area_threshold)
@@ -120,14 +121,10 @@ def threshold_binary(img):
     return fixed_t
 
 #  开操作，消除横竖线干扰
-def open_operation(img, element_size):
-    element_for_hor = cv2.getStructuringElement(cv2.MORPH_RECT, (1, element_size))    #  处理横线
+def open_operation(img, element_size_w, element_size_h):
+    element_for_hor = cv2.getStructuringElement(cv2.MORPH_RECT, (element_size_w, element_size_h))    #  处理横线
     erosion_ed = cv2.erode(img, element_for_hor, iterations=1)  # 腐蚀一次
     dilation_ed = cv2.dilate(erosion_ed, element_for_hor, iterations=1)  # 膨胀一次
-
-    element_for_ver = cv2.getStructuringElement(cv2.MORPH_RECT, (element_size, 1))    # 处理竖线
-    erosion_ed = cv2.erode(dilation_ed, element_for_ver, iterations=1)  # 腐蚀一次
-    dilation_ed = cv2.dilate(erosion_ed, element_for_ver, iterations=1)  # 膨胀一次
     return dilation_ed
 
 
@@ -145,8 +142,8 @@ def link_numbers(img, link_len, de_link_len, link_h):
 
 def get_contours(img, area_threshold):
     #  先消去过细的部分（没腐蚀掉的横竖线）
-    img = clean_ver(img)
-    img = clean_hor(img)
+    img = open_operation(img, 1, 9)
+    img = open_operation(img, 7, 1)
 
     h, w = img.shape[:2]
     # 消除不规则凸起
@@ -182,7 +179,7 @@ def get_contours(img, area_threshold):
                 end += 1
 
     # 再消除一次细横线（因为消除手枪把之后可能会出现新的横线）
-    img = clean_ver(img)
+    img = open_operation(img, 1, 9)
 
     #                                                  􏱚   轮廓检索模式􏰎              轮廓近似方法
     contours, hierarchy = cv2.findContours(img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -198,58 +195,58 @@ def get_contours(img, area_threshold):
     return big_contours
 
 
-def clean_ver(img):  # 消除细横线
-    h, w = img.shape[:2]
-    for i in range(h):
-        for j in range(w):
-            curr_pixel = img[i][j]
-            if curr_pixel == 0:
-                continue
-            i_f, j_f = i, j
-            above, under = 0, 0
-            #  纵向 （消除横线）
-            while i_f < h - 1 and img[i_f][j] == 255:  # 往下走
-                i_f += 1
-                under += 1
-                if under >= 9:
-                    break
-            i_f = i
-            while i_f > 0 and img[i_f][j] == 255:  # 往上走
-                i_f -= 1
-                above += 1
-                if above >= 9:
-                    break
-            if under + above < 9:  # 去掉粗细小于等于10的横线  （因为link_element的高度是10）
-                for i_del in range(i - above, i + under + 1):
-                    img[i_del][j] = 0
-    return img
-
-
-def clean_hor(img):  # 消除细竖线
-    h, w = img.shape[:2]
-    for i in range(h):
-        for j in range(w):
-            curr_pixel = img[i][j]
-            if curr_pixel == 0:
-                continue
-            i_f, j_f = i, j
-            above, under, left, right = 0, 0, 0, 0
-            #  横向 （消除竖线）
-            while j_f < w-1 and img[i][j_f] == 255:  # 向右走
-                j_f += 1
-                right += 1
-                if right >= 7:
-                    break
-            j_f = j
-            while j_f > 0 and img[i][j_f] == 255:  # 向左走
-                j_f -= 1
-                left += 1
-                if left >= 7:
-                    break
-            if left + right < 7:    # 去掉粗细小于等于7的竖线（像素左右各有3个点）
-                for j_del in range(j-left, j+right+1):
-                    img[i][j_del] = 0
-    return img
+# def clean_ver(img):  # 消除细横线
+#     h, w = img.shape[:2]
+#     for i in range(h):
+#         for j in range(w):
+#             curr_pixel = img[i][j]
+#             if curr_pixel == 0:
+#                 continue
+#             i_f, j_f = i, j
+#             above, under = 0, 0
+#             #  纵向 （消除横线）
+#             while i_f < h - 1 and img[i_f][j] == 255:  # 往下走
+#                 i_f += 1
+#                 under += 1
+#                 if under >= 9:
+#                     break
+#             i_f = i
+#             while i_f > 0 and img[i_f][j] == 255:  # 往上走
+#                 i_f -= 1
+#                 above += 1
+#                 if above >= 9:
+#                     break
+#             if under + above < 9:  # 去掉粗细小于等于10的横线  （因为link_element的高度是10）
+#                 for i_del in range(i - above, i + under + 1):
+#                     img[i_del][j] = 0
+#     return img
+#
+#
+# def clean_hor(img):  # 消除细竖线
+#     h, w = img.shape[:2]
+#     for i in range(h):
+#         for j in range(w):
+#             curr_pixel = img[i][j]
+#             if curr_pixel == 0:
+#                 continue
+#             i_f, j_f = i, j
+#             above, under, left, right = 0, 0, 0, 0
+#             #  横向 （消除竖线）
+#             while j_f < w-1 and img[i][j_f] == 255:  # 向右走
+#                 j_f += 1
+#                 right += 1
+#                 if right >= 7:
+#                     break
+#             j_f = j
+#             while j_f > 0 and img[i][j_f] == 255:  # 向左走
+#                 j_f -= 1
+#                 left += 1
+#                 if left >= 7:
+#                     break
+#             if left + right < 7:    # 去掉粗细小于等于7的竖线（像素左右各有3个点）
+#                 for j_del in range(j-left, j+right+1):
+#                     img[i][j_del] = 0
+#     return img
 
 
 def process(src_dir, dst_dir):
