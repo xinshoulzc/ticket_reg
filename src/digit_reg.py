@@ -16,6 +16,7 @@ batch_size = 50
 images = tf.placeholder(tf.float32, shape=(None, X_SIZE, Y_SIZE))
 labels = tf.placeholder(tf.int32, shape=(None, ))
 tf.random.set_random_seed(2333)
+predict = None
 debug_op = []
 
 def model_fn(x):
@@ -54,6 +55,7 @@ def infer():
     logits = model_fn(images)
     debug_op.append(logits)
     # print(logits.shape)
+    global predict
     predict = tf.math.argmax(logits, axis=1)
     # print(predict.shape)
     return predict
@@ -137,7 +139,10 @@ def infer_main(inputdir, modeldir, outputdir, eval_mode):
         logger.info("x_test shape: {}".format(str(x_test.shape)))
 
     # inference process
-    predict = infer()
+    global predict
+    if predict is None:
+        print("build graph")
+        infer()
     saver = tf.train.Saver(max_to_keep=2)
     # saver = tf.train.import_meta_graph('model/mnist.cpkt-4.meta')
     with tf.Session() as sess:
