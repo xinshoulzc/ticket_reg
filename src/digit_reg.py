@@ -141,7 +141,6 @@ def infer_main(inputdir, modeldir, outputdir, eval_mode):
     # inference process
     global predict
     if predict is None:
-        print("build graph")
         infer()
     saver = tf.train.Saver(max_to_keep=2)
     # saver = tf.train.import_meta_graph('model/mnist.cpkt-4.meta')
@@ -181,6 +180,7 @@ def infer_main(inputdir, modeldir, outputdir, eval_mode):
         with open(os.path.join(outputdir, "results"), "w") as out:
             for x, y in zip(paths, y_predict):
                 out.write(x + "\t" + str(y) + "\n")
+            os.fsync(out)
 
 
 
