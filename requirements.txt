@@ -1,5 +1,5 @@
 tensorboard==1.15.0
-tensorflow==1.15.2
+tensorflow==2.5.1
 tqdm==4.43.0
 numpy==1.16.4
 Pillow==7.0.0
